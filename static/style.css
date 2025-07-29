@@ -1,0 +1,124 @@
+/* Additional custom styles for the TTS application */
+
+/* Smooth transitions for all elements */
+* {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Enhanced button hover effects */
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* File input styling */
+input[type="file"] {
+    cursor: pointer;
+}
+
+input[type="file"]:hover {
+    background-color: #f8f9fa;
+}
+
+/* Audio player styling */
+audio {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading animation enhancement */
+.loading {
+    margin: 0 auto;
+}
+
+/* Form focus states */
+input:focus,
+textarea:focus,
+select:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Success and error message animations */
+.fade-in {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    h1 {
+        font-size: 2rem !important;
+    }
+    
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* High contrast mode improvements */
+.high-contrast {
+    border: 2px solid #ffffff;
+}
+
+.high-contrast button:hover {
+    background-color: #cccccc !important;
+    color: #000000 !important;
+}
+
+/* Accessibility improvements */
+.large-font .container {
+    max-width: 90%;
+}
+
+.large-font textarea {
+    min-height: 150px;
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+}
