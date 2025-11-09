@@ -13,7 +13,7 @@ import io
 # Add googletrans import
 
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='static')
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
