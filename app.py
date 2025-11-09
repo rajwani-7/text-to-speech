@@ -3,15 +3,22 @@ import uuid
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, send_file, url_for
 from gtts import gTTS
+from googletrans import Translator
 from werkzeug.utils import secure_filename
 import time
 import re
 import base64
 import io
 
+# Add googletrans import
+
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Initialize Google Translator
+translator = Translator()
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'txt'}
@@ -22,14 +29,31 @@ def allowed_file(filename):
 
 def detect_language(text):
     """Detect the language of the input text"""
-    # Simplified language detection - assume English for now
-    return 'en'
+    try:
+        detection = translator.detect(text)
+        return detection.lang
+    except Exception:
+        return 'en'  # Default to English if detection fails
 
 def translate_text(text, target_language):
     """Translate text to target language"""
-    # Simplified translation - return original text for now
-    # In a production app, you would integrate with a translation service
-    return text
+    try:
+        if target_language == 'en':
+            return text  # No translation needed for English
+
+        # Detect source language
+        source_lang = detect_language(text)
+
+        # If source is already the target language, no translation needed
+        if source_lang == target_language:
+            return text
+
+        # Translate text
+        result = translator.translate(text, src=source_lang, dest=target_language)
+        return result.text
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return text  # Return original text if translation fails
 
 @app.route('/')
 def index():
