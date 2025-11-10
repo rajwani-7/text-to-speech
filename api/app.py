@@ -13,7 +13,7 @@ import io
 # Add googletrans import
 
 
-app = Flask(__name__, template_folder='static')
+app = Flask(__name__, template_folder='../static')
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -228,4 +228,4 @@ def download_audio():
         return jsonify({'error': f'Error downloading audio: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    app.run()
+     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
