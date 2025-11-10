@@ -8,6 +8,5 @@ click==8.1.7
 blinker==1.6.3
 googletrans==4.0.0-rc1
 flask-cors
-httpx==0.24.1
+httpx==0.13.3
 gunicorn==21.2.0
-gunicorn
