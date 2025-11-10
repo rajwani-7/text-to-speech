@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, send_file, url_for
 from gtts import gTTS
-from googletrans import Translator
 from werkzeug.utils import secure_filename
 import time
 import re
@@ -11,17 +10,18 @@ import base64
 import io
 
 # Add googletrans import
+from deep_translator import GoogleTranslator
+import pyttsx3
+import docx
+from PyPDF2 import PdfReader
 
 
 app = Flask(__name__, template_folder='../static')
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Initialize Google Translator
-translator = Translator()
-
 # Allowed file extensions
-ALLOWED_EXTENSIONS = {'txt'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
@@ -30,27 +30,42 @@ def allowed_file(filename):
 def detect_language(text):
     """Detect the language of the input text"""
     try:
-        detection = translator.detect(text)
-        return detection.lang
+        return GoogleTranslator().detect(text)[0]
     except Exception:
         return 'en'  # Default to English if detection fails
 
 def translate_text(text, target_language):
     """Translate text to target language"""
     try:
-        if target_language == 'en':
+        if target_language == 'en' or not text.strip():
             return text  # No translation needed for English
 
-        # Detect source language
-        source_lang = detect_language(text)
+        # Heuristic to protect proper nouns (like names) from being translated.
+        # We assume capitalized words are names and should not be translated.
+        words = text.split(' ')
+        placeholders = {}
+        processed_words = []
+        
+        for i, word in enumerate(words):
+            # A simple check for a proper noun: is it capitalized?
+            if word.istitle():
+                placeholder = f"__NAME{len(placeholders)}__"
+                placeholders[placeholder] = word
+                processed_words.append(placeholder)
+            else:
+                processed_words.append(word)
+        
+        text_with_placeholders = ' '.join(processed_words)
 
-        # If source is already the target language, no translation needed
-        if source_lang == target_language:
-            return text
+        # Translate the text with placeholders
+        translated_text = GoogleTranslator(source='auto', target=target_language).translate(text_with_placeholders)
 
-        # Translate text
-        result = translator.translate(text, src=source_lang, dest=target_language)
-        return result.text
+        # Replace placeholders with the original names
+        for placeholder, original_word in placeholders.items():
+            translated_text = translated_text.replace(placeholder, original_word, 1)
+
+        return translated_text
+
     except Exception as e:
         print(f"Translation error: {e}")
         return text  # Return original text if translation fails
@@ -90,10 +105,20 @@ def convert_text_to_speech():
         text_content = ''
         if file and file.filename != '' and allowed_file(file.filename):
             try:
-                # Read file content directly without saving to disk
-                text_content = file.read().decode('utf-8').strip()
+                extension = file.filename.rsplit('.', 1)[1].lower()
+                if extension == 'txt':
+                    text_content = file.read().decode('utf-8').strip()
+                elif extension == 'pdf':
+                    pdf_reader = PdfReader(file)
+                    text_content = ""
+                    for page in pdf_reader.pages:
+                        text_content += page.extract_text()
+                elif extension == 'docx':
+                    doc = docx.Document(file)
+                    text_content = "\n".join([para.text for para in doc.paragraphs])
+
             except Exception as e:
-                return jsonify({'error': f'Error reading file: {str(e)}'}), 400
+                return jsonify({'error': f'Error reading file content: {str(e)}'}), 400
                 
         elif text_input:
             text_content = text_input
@@ -120,12 +145,10 @@ def convert_text_to_speech():
             use_slow = False
             if speed == 'slow':
                 use_slow = True
-                # Add pauses between sentences for slower speech
-                translated_text = translated_text.replace('.', '... ').replace('!', '... ').replace('?', '... ')
             elif speed == 'fast':
                 # For fast speech, we'll use normal speed but with shorter pauses
                 translated_text = translated_text.replace('...', '.').replace('..', '.')
-            
+
             # Voice type affects the text preprocessing
             if voice == 'expressive':
                 # Add emphasis for expressive voice
@@ -137,7 +160,6 @@ def convert_text_to_speech():
                 # Clean up text for premium voice
                 translated_text = ' '.join(translated_text.split())  # Clean extra spaces
             
-            # Create TTS object with proper parameters
             tts = gTTS(
                 text=translated_text, 
                 lang=gtts_lang, 
@@ -145,9 +167,9 @@ def convert_text_to_speech():
                 lang_check=True
             )
             
-            # Save to memory instead of file system
             audio_buffer = io.BytesIO()
             tts.write_to_fp(audio_buffer)
+
             audio_buffer.seek(0)
             
             # Convert to base64 for sending to frontend
