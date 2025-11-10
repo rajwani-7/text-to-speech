@@ -12,3 +12,4 @@ httpx==0.13.3
 httpcore==0.9.1
 deep-translator==1.11.4
 gunicorn==21.2.0
+pyttsx3
