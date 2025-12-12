@@ -1,1 +1,7 @@
-python-3.11.9
+services:
+  - type: web
+    name: text-to-speech
+    env: python
+    pythonVersion: 3.11.9
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd api && gunicorn app:app --bind 0.0.0.0:$PORT
